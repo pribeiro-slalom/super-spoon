@@ -11,31 +11,31 @@ const server = setupServer(
   rest.get('/api/items', (req, res, ctx) => {
     return res(
       ctx.status(200),
-      ctx.json([
-        { id: 1, name: 'Test Item 1', created_at: '2023-01-01T00:00:00.000Z' },
-        { id: 2, name: 'Test Item 2', created_at: '2023-01-02T00:00:00.000Z' },
-      ])
+      ctx.json({ data: [
+        { id: 1, title: 'Test Item 1', createdAt: '2023-01-01T00:00:00.000Z' },
+        { id: 2, title: 'Test Item 2', createdAt: '2023-01-02T00:00:00.000Z' }
+      ], meta: { page: 1, per_page: 20, total: 2, total_pages: 1 } })
     );
   }),
   
   // POST /api/items handler
   rest.post('/api/items', (req, res, ctx) => {
-    const { name } = req.body;
+    const { title } = req.body;
     
-    if (!name || name.trim() === '') {
+    if (!title || title.trim() === '') {
       return res(
         ctx.status(400),
-        ctx.json({ error: 'Item name is required' })
+        ctx.json({ error: { message: 'Title is required' } })
       );
     }
     
     return res(
       ctx.status(201),
-      ctx.json({
+      ctx.json({ data: {
         id: 3,
-        name,
-        created_at: new Date().toISOString(),
-      })
+        title,
+        createdAt: new Date().toISOString(),
+      } })
     );
   })
 );
@@ -50,8 +50,8 @@ describe('App Component', () => {
     await act(async () => {
       render(<App />);
     });
-    expect(screen.getByText('React Frontend with Node Backend')).toBeInTheDocument();
-    expect(screen.getByText('Connected to in-memory database')).toBeInTheDocument();
+    expect(screen.getByText('To Do App')).toBeInTheDocument();
+    expect(screen.getByText('Keep track of your tasks')).toBeInTheDocument();
   });
 
   test('loads and displays items', async () => {

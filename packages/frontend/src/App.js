@@ -19,7 +19,15 @@ function App() {
         throw new Error('Network response was not ok');
       }
       const result = await response.json();
-      setData(result);
+      // Support both legacy array and new { data, meta } shapes
+      const items = Array.isArray(result) ? result : (result && result.data) ? result.data : [];
+      // Normalize item fields to be compatible with UI
+      const normalized = items.map(item => ({
+        id: item.id,
+        title: item.title || item.name,
+        createdAt: item.createdAt || item.created_at,
+      }));
+      setData(normalized);
       setError(null);
     } catch (err) {
       setError('Failed to fetch data: ' + err.message);
@@ -34,12 +42,13 @@ function App() {
     if (!newItem.trim()) return;
 
     try {
+      // Send 'title' per new API contract
       const response = await fetch('/api/items', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: newItem }),
+        body: JSON.stringify({ title: newItem }),
       });
 
       if (!response.ok) {
@@ -47,7 +56,10 @@ function App() {
       }
 
       const result = await response.json();
-      setData([...data, result]);
+      // Result may be { data: item } or item directly
+      const item = result && result.data ? result.data : result;
+      const normalized = { id: item.id, title: item.title || item.name, createdAt: item.createdAt || item.created_at };
+      setData([...data, normalized]);
       setNewItem('');
     } catch (err) {
       setError('Error adding item: ' + err.message);
@@ -103,7 +115,7 @@ function App() {
               {data.length > 0 ? (
                 data.map((item) => (
                   <li key={item.id}>
-                    <span>{item.name}</span>
+                    <span>{item.title}</span>
                     <button 
                       onClick={() => handleDelete(item.id)}
                       className="delete-btn"
